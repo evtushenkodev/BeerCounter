@@ -52,26 +52,13 @@ class MainActivity : AppCompatActivity() {
         showCounterDialog(buttonName)
     }
 
-
-    private fun createButtonWithCounter(buttonName: String, layout: LinearLayout): TextView {
-        val buttonTextView = TextView(this)
-        buttonTextView.text = "$buttonName: 0.0"
-        buttonTextView.gravity = Gravity.CENTER
-        buttonTextView.setOnClickListener { onButtonClick(buttonTextView) }
-        layout.addView(buttonTextView)
-        return buttonTextView
-    }
-
-    private fun onButtonClick(button: TextView) {
-        val buttonName = button.text.toString().split(":")[0].trim()
-        showCounterDialog(buttonName)
-    }
-
     private fun showCounterDialog(buttonName: String) {
         val builder = AlertDialog.Builder(this)
         val inflater = layoutInflater
         val dialogView = inflater.inflate(R.layout.dialog_counter, null)
         builder.setView(dialogView)
+        val beerNameTextView = dialogView.findViewById<TextView>(R.id.beerNameTextView)
+        beerNameTextView.text = buttonName
 
         val counterTextView = dialogView.findViewById<TextView>(R.id.counterTextView)
         val addButton = dialogView.findViewById<Button>(R.id.addButton)
@@ -108,25 +95,34 @@ class MainActivity : AppCompatActivity() {
         predefinedValueButton1.setOnClickListener {
             val currentCount = buttonCountMap[buttonName] ?: 0.0
             val predefinedValue = 1.0
-            buttonCountMap[buttonName] = currentCount - predefinedValue
-            counterTextView.text = (currentCount - predefinedValue).toString()
-            updateButtonCountText()
+
+            if (currentCount >= predefinedValue) {
+                buttonCountMap[buttonName] = currentCount - predefinedValue
+                counterTextView.text = (currentCount - predefinedValue).toString()
+                updateButtonCountText()
+            }
         }
 
         predefinedValueButton2.setOnClickListener {
             val currentCount = buttonCountMap[buttonName] ?: 0.0
             val predefinedValue = 1.5
-            buttonCountMap[buttonName] = currentCount - predefinedValue
-            counterTextView.text = (currentCount - predefinedValue).toString()
-            updateButtonCountText()
+
+            if (currentCount >= predefinedValue) {
+                buttonCountMap[buttonName] = currentCount - predefinedValue
+                counterTextView.text = (currentCount - predefinedValue).toString()
+                updateButtonCountText()
+            }
         }
 
         predefinedValueButton3.setOnClickListener {
             val currentCount = buttonCountMap[buttonName] ?: 0.0
             val predefinedValue = 2.0
-            buttonCountMap[buttonName] = currentCount - predefinedValue
-            counterTextView.text = (currentCount - predefinedValue).toString()
-            updateButtonCountText()
+
+            if (currentCount >= predefinedValue) {
+                buttonCountMap[buttonName] = currentCount - predefinedValue
+                counterTextView.text = (currentCount - predefinedValue).toString()
+                updateButtonCountText()
+            }
         }
 
         builder.setPositiveButton("Закрыть") { _, _ ->

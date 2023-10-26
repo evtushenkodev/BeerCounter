@@ -1,8 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <shape xmlns:android="http://schemas.android.com/apk/res/android"
-        android:shape="rectangle">
-        <solid android:color="#007acc" />
-        <corners android:radius="4dp" />
-    </shape>
+    <item android:state_pressed="false">
+        <shape>
+            <solid android:color="#ffff00" /> <!-- Цвет кнопки в обычном состоянии -->
+            <corners android:radius="8dp" /> <!-- Закругленные углы -->
+        </shape>
+    </item>
+    <item android:state_pressed="true">
+        <shape>
+            <solid android:color="#00FF00" /> <!-- Цвет кнопки при нажатии -->
+            <corners android:radius="8dp" /> <!-- Закругленные углы -->
+        </shape>
+    </item>
 </selector>
