@@ -44,26 +44,36 @@
 
     </LinearLayout>
 
-    <Button
-        android:id="@+id/predefinedValueButton1"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="1"
-        style="@style/ButtonStyle" />
+        android:orientation="horizontal">
 
-    <Button
-        android:id="@+id/predefinedValueButton2"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="1.5"
-        style="@style/ButtonStyle" />
+        <Button
+            android:id="@+id/predefinedValueButton1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="1"
+            style="@style/ButtonStyle" />
 
-    <Button
-        android:id="@+id/predefinedValueButton3"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="2"
-        style="@style/ButtonStyle" />
+        <Button
+            android:id="@+id/predefinedValueButton2"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="1.5"
+            style="@style/ButtonStyle" />
+
+        <Button
+            android:id="@+id/predefinedValueButton3"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="2"
+            style="@style/ButtonStyle" />
+
+    </LinearLayout>
 
     <EditText
         android:id="@+id/customValueEditText"
