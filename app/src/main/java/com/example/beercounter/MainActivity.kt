@@ -11,6 +11,9 @@ import android.content.Intent
 import android.graphics.Color
 import android.icu.text.SimpleDateFormat
 import android.net.Uri
+import android.text.Spannable
+import android.text.SpannableString
+import android.text.style.ForegroundColorSpan
 import android.util.TypedValue
 import android.view.ContextThemeWrapper
 import android.view.Gravity
@@ -182,7 +185,6 @@ class MainActivity : AppCompatActivity() {
         val counterTextView = dialogView.findViewById<TextView>(R.id.counterTextView)
         val addButton = dialogView.findViewById<Button>(R.id.addButton)
         val subtractButton = dialogView.findViewById<Button>(R.id.subtractButton)
-
         val predefinedValueButton1 = dialogView.findViewById<Button>(R.id.predefinedValueButton1)
         val predefinedValueButton2 = dialogView.findViewById<Button>(R.id.predefinedValueButton2)
         val predefinedValueButton3 = dialogView.findViewById<Button>(R.id.predefinedValueButton3)
@@ -192,7 +194,7 @@ class MainActivity : AppCompatActivity() {
         val initialValue = buttonCountMap[buttonName]?.value ?: 0.0
 
         // Установить начальное значение в counterTextView
-        counterTextView.text = initialValue.toString()
+        counterTextView.text = "%.1f л - %.1f".format(initialValue, 0.0)
 
         fun updateButtonCountText() {
             val currentCount = buttonCountMap[buttonName]?.value ?: 0.0
@@ -204,7 +206,13 @@ class MainActivity : AppCompatActivity() {
             val customValue = customValueEditText.text.toString().toDoubleOrNull() ?: 0.0
             val newCount = currentCount + customValue
             buttonCountMap[buttonName]?.value = newCount
-            counterTextView.text = newCount.toString()
+            customValueEditText.text.clear()
+            val newText = "%.1f л + %.1f".format(newCount, customValue)
+            val spannable = SpannableString(newText)
+            // Устанавливаем цвет для второй части текста (отнятой суммы)
+            val greenColor = Color.parseColor("#008000")
+            spannable.setSpan(ForegroundColorSpan(greenColor), newText.indexOf('+') + 1, newText.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+            counterTextView.text = spannable
             updateButtonCountText()
         }
 
@@ -214,7 +222,12 @@ class MainActivity : AppCompatActivity() {
             if (currentCount >= customValue) {
                 val newCount = currentCount - customValue
                 buttonCountMap[buttonName]?.value = newCount
-                counterTextView.text = newCount.toString()
+                customValueEditText.text.clear()
+                val newText = "%.1f л - %.1f".format(newCount, customValue)
+                val spannable = SpannableString(newText)
+                // Устанавливаем цвет для второй части текста (отнятой суммы)
+                spannable.setSpan(ForegroundColorSpan(Color.RED), newText.indexOf('-') + 1, newText.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                counterTextView.text = spannable
                 updateButtonCountText()
             }
         }
@@ -226,7 +239,10 @@ class MainActivity : AppCompatActivity() {
             if (currentCount >= predefinedValue) {
                 val newCount = currentCount - predefinedValue
                 buttonCountMap[buttonName]?.value = newCount
-                counterTextView.text = newCount.toString()
+                val newText = "%.1f л - %.1f".format(newCount, predefinedValue)
+                val spannable = SpannableString(newText)
+                spannable.setSpan(ForegroundColorSpan(Color.RED), newText.indexOf('-') + 1, newText.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                counterTextView.text = spannable
                 updateButtonCountText()
             }
         }
@@ -238,7 +254,10 @@ class MainActivity : AppCompatActivity() {
             if (currentCount >= predefinedValue) {
                 val newCount = currentCount - predefinedValue
                 buttonCountMap[buttonName]?.value = newCount
-                counterTextView.text = newCount.toString()
+                val newText = "%.1f л - %.1f".format(newCount, predefinedValue)
+                val spannable = SpannableString(newText)
+                spannable.setSpan(ForegroundColorSpan(Color.RED), newText.indexOf('-') + 1, newText.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                counterTextView.text = spannable
                 updateButtonCountText()
             }
         }
@@ -250,7 +269,10 @@ class MainActivity : AppCompatActivity() {
             if (currentCount >= predefinedValue) {
                 val newCount = currentCount - predefinedValue
                 buttonCountMap[buttonName]?.value = newCount
-                counterTextView.text = newCount.toString()
+                val newText = "%.1f л - %.1f".format(newCount, predefinedValue)
+                val spannable = SpannableString(newText)
+                spannable.setSpan(ForegroundColorSpan(Color.RED), newText.indexOf('-') + 1, newText.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                counterTextView.text = spannable
                 updateButtonCountText()
             }
         }
@@ -262,4 +284,5 @@ class MainActivity : AppCompatActivity() {
 
         builder.create().show()
     }
+
 }

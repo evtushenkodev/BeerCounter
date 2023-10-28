@@ -10,7 +10,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:text="Название пива"
-        android:textSize="18sp" />
+        android:textSize="36sp" />
 
     <TextView
         android:id="@+id/counterTextView"
@@ -18,7 +18,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:text="0"
-        android:textSize="24sp" />
+        android:textSize="42sp" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -27,20 +27,22 @@
 
         <Button
             android:id="@+id/addButton"
+            style="@style/ButtonModalStyle"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="65dp"
             android:layout_weight="1"
-            android:text="Добавить"
-            style="@style/ButtonStyle" />
+            android:backgroundTint="#439146"
+            android:text="Добавить" />
 
 
         <Button
             android:id="@+id/subtractButton"
+            style="@style/ButtonModalStyle"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="65dp"
             android:layout_weight="1"
-            android:text="Отнять"
-            style="@style/ButtonStyle" />
+            android:backgroundTint="#CA4239"
+            android:text="Отнять" />
 
     </LinearLayout>
 
@@ -51,34 +53,47 @@
 
         <Button
             android:id="@+id/predefinedValueButton1"
+            style="@style/ButtonStyle"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="55dp"
             android:layout_weight="1"
-            android:text="1"
-            style="@style/ButtonStyle" />
+            android:textSize="20dp"
+            android:text="1" />
 
         <Button
             android:id="@+id/predefinedValueButton2"
+            style="@style/ButtonStyle"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="55dp"
             android:layout_weight="1"
-            android:text="1.5"
-            style="@style/ButtonStyle" />
+            android:textSize="20dp"
+            android:text="1.5" />
 
         <Button
             android:id="@+id/predefinedValueButton3"
+            style="@style/ButtonStyle"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="55dp"
             android:layout_weight="1"
-            android:text="2"
-            style="@style/ButtonStyle" />
+            android:textSize="20dp"
+            android:text="2" />
 
     </LinearLayout>
 
-    <EditText
-        android:id="@+id/customValueEditText"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Или введите свое значение" />
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center_horizontal">
+
+        <EditText
+            android:id="@+id/customValueEditText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:hint="0"
+            android:textAppearance="@style/TextAppearance.AppCompat.Large"
+            android:textSize="96sp"
+            android:textStyle="bold" />
+    </LinearLayout>
 
 </LinearLayout>
