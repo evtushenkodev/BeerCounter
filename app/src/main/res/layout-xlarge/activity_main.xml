@@ -22,10 +22,10 @@
             android:id="@+id/chooseFileButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignParentBottom="true"
-            android:layout_centerVertical="true"
             android:layout_marginStart="16dp"
+            android:layout_centerVertical="true"
             android:onClick="onChooseFileButtonClick"
+            android:layout_alignParentBottom="true"
             android:text="@string/choose_file"
             android:theme="@style/Base.Theme.BeerCounter" />
 
@@ -33,11 +33,11 @@
             android:id="@+id/saveFileButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignParentEnd="true"
-            android:layout_alignParentBottom="true"
-            android:layout_centerVertical="true"
             android:layout_marginEnd="16dp"
+            android:layout_centerVertical="true"
+            android:layout_alignParentEnd="true"
             android:onClick="onSaveButtonClick"
+            android:layout_alignParentBottom="true"
             android:text="@string/save_file"
             android:theme="@style/Base.Theme.BeerCounter" />
 

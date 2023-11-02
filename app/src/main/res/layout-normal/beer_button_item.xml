@@ -1,0 +1,9 @@
+<!-- beer_button_item.xml -->
+<Button
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/beerButton"
+    style="@style/ButtonStyle"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="Жигулёвское&#10; Светлое:&#10;20 л." />
+

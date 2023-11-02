@@ -1,55 +1,58 @@
 package com.example.beercounter
 
 import android.annotation.SuppressLint
-import android.os.Bundle
-import android.widget.Button
-import androidx.appcompat.app.AppCompatActivity
-
-import android.widget.TextView
 import android.app.AlertDialog
-import android.content.Intent
 import android.graphics.Color
 import android.icu.text.SimpleDateFormat
 import android.net.Uri
+import android.os.Bundle
 import android.text.Spannable
 import android.text.SpannableString
 import android.text.style.ForegroundColorSpan
-import android.util.TypedValue
-import android.view.ContextThemeWrapper
-import android.view.Gravity
-import android.view.LayoutInflater
 import android.view.View
-import android.widget.ArrayAdapter
+import android.widget.Button
 import android.widget.EditText
-import android.widget.GridLayout
+import android.widget.TextView
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.ContextCompat
-import androidx.core.content.res.ResourcesCompat
+import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.MutableLiveData
-import org.apache.poi.ss.usermodel.WorkbookFactory
-import org.apache.poi.ss.usermodel.Row
-import org.apache.poi.ss.usermodel.Sheet
-import org.apache.poi.xssf.usermodel.XSSFWorkbook
+import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.example.beercounter.adapter.ButtonAdapter
 import org.apache.logging.log4j.LogManager
-import org.apache.logging.log4j.Logger
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException
 import org.apache.poi.ss.usermodel.Workbook
+import org.apache.poi.xssf.usermodel.XSSFWorkbook
 import java.io.IOException
 import java.util.Date
 import java.util.Locale
 
 
+data class BeerButtonData(val name: String, val count: MutableLiveData<Double>) {
+    // Метод для обновления значения в объекте BeerButtonData
+    fun updateValue(newValue: Double) {
+        count.value = newValue
+    }
+}
+
+
 class MainActivity : AppCompatActivity() {
     private val buttonCountMap = mutableMapOf<String, MutableLiveData<Double>>()
-    private val buttonTextViewMap = mutableMapOf<String, TextView>()
+    private val buttonDataList = mutableListOf<BeerButtonData>()
 
-    private val openExcelDocument: ActivityResultLauncher<Array<String>> = registerForActivityResult(
-        ActivityResultContracts.OpenDocument()) { uri: Uri? ->
-        if (uri != null) {
-            readExcelAndCreateButtons(uri)
+    private lateinit var recyclerView: RecyclerView
+    private lateinit var buttonAdapter: ButtonAdapter
+
+
+    private val openExcelDocument: ActivityResultLauncher<Array<String>> =
+        registerForActivityResult(
+            ActivityResultContracts.OpenDocument()
+        ) { uri: Uri? ->
+            if (uri != null) {
+                readExcelAndCreateButtons(uri)
+            }
         }
-    }
 
     private val saveExcelDocument =
         registerForActivityResult(ActivityResultContracts.CreateDocument()) { uri ->
@@ -69,14 +72,24 @@ class MainActivity : AppCompatActivity() {
         saveExcelDocument.launch(fileName)
     }
 
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        recyclerView = findViewById(R.id.buttonsRecyclerView)
+        val numberOfColumns = resources.getInteger(R.integer.buttons_per_row)
+        recyclerView.layoutManager = GridLayoutManager(this, numberOfColumns)
+        buttonAdapter = ButtonAdapter(buttonDataList) { buttonData ->
+            showCounterDialog(buttonData)
+        }
+        recyclerView.adapter = buttonAdapter
     }
 
+
+    @SuppressLint("NotifyDataSetChanged")
     private fun readExcelAndCreateButtons(excelFileUri: Uri) {
-        val gridLayout = findViewById<GridLayout>(R.id.buttonsLayout)
-        gridLayout.removeAllViews() // Удаляем существующие кнопки
+        buttonDataList.clear() // Очищаем существующий список кнопок
 
         try {
             val inputStream = contentResolver.openInputStream(excelFileUri)
@@ -89,12 +102,15 @@ class MainActivity : AppCompatActivity() {
 
                     if (buttonName != null && buttonCount != null) {
                         val liveData = MutableLiveData(buttonCount)
-                        createButtonWithCounter(buttonName, liveData)
+                        val beerButtonData = BeerButtonData(buttonName, liveData)
+                        buttonDataList.add(beerButtonData) // Добавляем данные о кнопке в список
                     }
                 }
             }
 
             workbook.close()
+
+            buttonAdapter.notifyDataSetChanged() // Обновляем адаптер после изменения списка кнопок
         } catch (e: InvalidFormatException) {
             val logger = LogManager.getLogger("MyLogger")
             logger.error("InvalidFormatException while opening Excel file", e)
@@ -113,13 +129,13 @@ class MainActivity : AppCompatActivity() {
             val workbook: Workbook = XSSFWorkbook()
             val sheet = workbook.createSheet("Data")
 
-            for ((buttonName, liveData) in buttonCountMap) {
-                val row = sheet.createRow(sheet.physicalNumberOfRows)
+            for ((index, buttonData) in buttonDataList.withIndex()) {
+                val row = sheet.createRow(index)
                 val cellName = row.createCell(0)
                 val cellValue = row.createCell(1)
 
-                cellName.setCellValue(buttonName)
-                cellValue.setCellValue(liveData.value ?: 0.0)
+                cellName.setCellValue(buttonData.name)
+                cellValue.setCellValue(buttonData.count.value ?: 0.0)
             }
 
             val outputStream = contentResolver.openOutputStream(fileUri)
@@ -134,146 +150,163 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun createButtonWithCounter(buttonName: String, liveData: MutableLiveData<Double>) {
-        val button = Button(this)
 
-        // Создаем строку, которая включает текст из второй колонки с добавленной буквой "л" в конце
-        val buttonText = "$buttonName:\n${liveData.value ?: 0.0} л"
-
-        button.text = buttonText
-
-        // Создаем параметры для кнопки
-        val layoutParams = GridLayout.LayoutParams()
-        layoutParams.width = GridLayout.LayoutParams.WRAP_CONTENT
-        layoutParams.height = GridLayout.LayoutParams.WRAP_CONTENT
-        layoutParams.columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f)
-        layoutParams.rowSpec = GridLayout.spec(GridLayout.UNDEFINED, 2f)
-
-        // Устанавливаем отступы между кнопками
-        layoutParams.setMargins(20, resources.getDimensionPixelSize(R.dimen.button_margin), 10, 10)
-
-        // Применяем стиль к кнопке
-        button.setBackgroundResource(R.drawable.button_background)
-        button.setTextColor(ContextCompat.getColor(this, R.color.black))
-        button.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20f)
-        button.setPadding(0, 100, 0, 100)
-        button.layoutParams = layoutParams
-
-        // Устанавливаем обработчик нажатия кнопки
-        button.setOnClickListener { onButtonClick(buttonName) }
-
-        val gridLayout = findViewById<GridLayout>(R.id.buttonsLayout)
-        gridLayout.addView(button)
-
-        // Сохраняем кнопку и соответствующий LiveData в мапы
-        buttonCountMap[buttonName] = liveData
-        buttonTextViewMap[buttonName] = button
-    }
-
-    private fun onButtonClick(buttonName: String) {
-        showCounterDialog(buttonName)
-    }
-
-    private fun showCounterDialog(buttonName: String) {
+    private fun showCounterDialog(buttonData: BeerButtonData) {
         val builder = AlertDialog.Builder(this)
         val inflater = layoutInflater
         val dialogView = inflater.inflate(R.layout.dialog_counter, null)
         builder.setView(dialogView)
         val beerNameTextView = dialogView.findViewById<TextView>(R.id.beerNameTextView)
+        val buttonName = buttonData.name
         beerNameTextView.text = buttonName
 
         val counterTextView = dialogView.findViewById<TextView>(R.id.counterTextView)
         val addButton = dialogView.findViewById<Button>(R.id.addButton)
-        val subtractButton = dialogView.findViewById<Button>(R.id.subtractButton)
+        val saleButton = dialogView.findViewById<Button>(R.id.saleButton)
         val predefinedValueButton1 = dialogView.findViewById<Button>(R.id.predefinedValueButton1)
         val predefinedValueButton2 = dialogView.findViewById<Button>(R.id.predefinedValueButton2)
         val predefinedValueButton3 = dialogView.findViewById<Button>(R.id.predefinedValueButton3)
         val customValueEditText = dialogView.findViewById<EditText>(R.id.customValueEditText)
 
-        // Получить начальное значение из buttonCountMap
-        val initialValue = buttonCountMap[buttonName]?.value ?: 0.0
-
-        // Установить начальное значение в counterTextView
-        counterTextView.text = "%.1f л - %.1f".format(initialValue, 0.0)
+        // Получить начальное значение из buttonData
+        val initialValue = buttonData.count.value ?: 0.0
 
         fun updateButtonCountText() {
-            val currentCount = buttonCountMap[buttonName]?.value ?: 0.0
-            buttonTextViewMap[buttonName]?.text = "$buttonName:\n$currentCount л"
+            val currentCount = buttonData.count.value ?: 0.0
+            val text: String
+            val delta: String
+            val colorSpan: ForegroundColorSpan
+            val greenColor = Color.parseColor("#008000")
+
+            if (currentCount > initialValue) {
+                delta = "+ %.1f".format(currentCount - initialValue)
+                colorSpan =
+                    ForegroundColorSpan(greenColor) // Зеленый цвет для прибавленного значения
+            } else if (currentCount < initialValue) {
+                delta = "- %.1f".format(initialValue - currentCount)
+                colorSpan = ForegroundColorSpan(Color.RED) // Красный цвет для отнятого значения
+            } else {
+                delta = ""
+                colorSpan = ForegroundColorSpan(Color.BLACK) // Черный цвет, если изменений нет
+            }
+
+            text = "%.1f л %s".format(currentCount, delta)
+            val spannable = SpannableString(text)
+            val deltaStart = text.indexOf(delta)
+            val deltaEnd = deltaStart + delta.length
+            spannable.setSpan(colorSpan, deltaStart, deltaEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+
+            counterTextView.text = spannable
+
+            // Обновляем текст на кнопке в адаптере
+            buttonAdapter.updateButtonValue(buttonData, currentCount)
         }
 
+        // Установить начальное значение в counterTextView
+        updateButtonCountText()
+
         addButton.setOnClickListener {
-            val currentCount = buttonCountMap[buttonName]?.value ?: 0.0
+            val currentCount = buttonData.count.value ?: 0.0
             val customValue = customValueEditText.text.toString().toDoubleOrNull() ?: 0.0
             val newCount = currentCount + customValue
-            buttonCountMap[buttonName]?.value = newCount
+            buttonData.updateValue(newCount)
             customValueEditText.text.clear()
             val newText = "%.1f л + %.1f".format(newCount, customValue)
             val spannable = SpannableString(newText)
             // Устанавливаем цвет для второй части текста (отнятой суммы)
-            val greenColor = Color.parseColor("#008000")
-            spannable.setSpan(ForegroundColorSpan(greenColor), newText.indexOf('+') + 1, newText.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+            spannable.setSpan(
+                ForegroundColorSpan(Color.GREEN),
+                newText.indexOf('+') + 1,
+                newText.length,
+                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+            )
             counterTextView.text = spannable
             updateButtonCountText()
+
         }
 
-        subtractButton.setOnClickListener {
-            val currentCount = buttonCountMap[buttonName]?.value ?: 0.0
+
+        saleButton.setOnClickListener {
+            val currentCount = buttonData.count.value ?: 0.0
             val customValue = customValueEditText.text.toString().toDoubleOrNull() ?: 0.0
             if (currentCount >= customValue) {
                 val newCount = currentCount - customValue
-                buttonCountMap[buttonName]?.value = newCount
+                buttonData.updateValue(newCount)
                 customValueEditText.text.clear()
                 val newText = "%.1f л - %.1f".format(newCount, customValue)
                 val spannable = SpannableString(newText)
-                // Устанавливаем цвет для второй части текста (отнятой суммы)
-                spannable.setSpan(ForegroundColorSpan(Color.RED), newText.indexOf('-') + 1, newText.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                spannable.setSpan(
+                    ForegroundColorSpan(Color.RED),
+                    newText.indexOf('-') + 1,
+                    newText.length,
+                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                )
                 counterTextView.text = spannable
                 updateButtonCountText()
+
             }
         }
 
         predefinedValueButton1.setOnClickListener {
-            val currentCount = buttonCountMap[buttonName]?.value ?: 0.0
+            val currentCount = buttonData.count.value ?: 0.0
             val predefinedValue = 1.0
 
             if (currentCount >= predefinedValue) {
                 val newCount = currentCount - predefinedValue
-                buttonCountMap[buttonName]?.value = newCount
+                buttonData.updateValue(newCount)
                 val newText = "%.1f л - %.1f".format(newCount, predefinedValue)
                 val spannable = SpannableString(newText)
-                spannable.setSpan(ForegroundColorSpan(Color.RED), newText.indexOf('-') + 1, newText.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                spannable.setSpan(
+                    ForegroundColorSpan(Color.RED),
+                    newText.indexOf('-') + 1,
+                    newText.length,
+                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                )
                 counterTextView.text = spannable
                 updateButtonCountText()
+
             }
         }
 
         predefinedValueButton2.setOnClickListener {
-            val currentCount = buttonCountMap[buttonName]?.value ?: 0.0
+            val currentCount = buttonData.count.value ?: 0.0
             val predefinedValue = 1.5
 
             if (currentCount >= predefinedValue) {
                 val newCount = currentCount - predefinedValue
-                buttonCountMap[buttonName]?.value = newCount
+                buttonData.updateValue(newCount)
                 val newText = "%.1f л - %.1f".format(newCount, predefinedValue)
                 val spannable = SpannableString(newText)
-                spannable.setSpan(ForegroundColorSpan(Color.RED), newText.indexOf('-') + 1, newText.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                spannable.setSpan(
+                    ForegroundColorSpan(Color.RED),
+                    newText.indexOf('-') + 1,
+                    newText.length,
+                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                )
                 counterTextView.text = spannable
                 updateButtonCountText()
+
             }
         }
 
         predefinedValueButton3.setOnClickListener {
-            val currentCount = buttonCountMap[buttonName]?.value ?: 0.0
+            val currentCount = buttonData.count.value ?: 0.0
             val predefinedValue = 2.0
 
             if (currentCount >= predefinedValue) {
                 val newCount = currentCount - predefinedValue
-                buttonCountMap[buttonName]?.value = newCount
+                buttonData.updateValue(newCount)
                 val newText = "%.1f л - %.1f".format(newCount, predefinedValue)
                 val spannable = SpannableString(newText)
-                spannable.setSpan(ForegroundColorSpan(Color.RED), newText.indexOf('-') + 1, newText.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                spannable.setSpan(
+                    ForegroundColorSpan(Color.RED),
+                    newText.indexOf('-') + 1,
+                    newText.length,
+                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                )
                 counterTextView.text = spannable
                 updateButtonCountText()
+
             }
         }
 

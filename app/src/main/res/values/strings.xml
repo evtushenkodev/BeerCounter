@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">BeerCounter</string>
+    <string name="sale">Продажа</string>
+    <string name="add">Приёмка</string>
+    <string name="save_file">Сохранить файл</string>
+    <string name="choose_file">Выбрать файл</string>
 </resources>
