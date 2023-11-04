@@ -1,7 +1,6 @@
 package com.example.beercounter.adapter
 
 import android.annotation.SuppressLint
-import android.os.Build
 import android.text.Html
 import android.view.LayoutInflater
 import android.view.View
@@ -29,10 +28,22 @@ class ButtonAdapter(private val buttonDataList: List<BeerButtonData>, private va
     override fun onBindViewHolder(holder: ButtonViewHolder, position: Int) {
         val buttonData = buttonDataList[position]
         val button = holder.button
-        button.setBackgroundResource(R.drawable.button_background)
 
-        // Заменяем пробелы на <br> для переноса слов и значений на новую строку
-        val formattedName = buttonData.name.replace(" ", "<br>")
+        val nameWords = buttonData.name.split(" ")
+        val formattedName = buildString {
+            for (word in nameWords) {
+                val truncatedWord = if (word.length > 9) {
+                    word.substring(0, 9)
+                } else {
+                    word
+                }
+                if (isNotEmpty()) {
+                    append("<br>")
+                }
+                append(truncatedWord)
+            }
+        }
+
         val formattedValue = (buttonData.count.value ?: 0.0)
 
         // Используем HTML-разметку для переноса строк и для высоты
@@ -64,6 +75,8 @@ class ButtonAdapter(private val buttonDataList: List<BeerButtonData>, private va
             maxButtonWidth = buttonWidth
         }
     }
+
+
 
     override fun getItemCount(): Int {
         return buttonDataList.size

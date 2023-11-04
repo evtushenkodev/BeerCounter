@@ -15,7 +15,7 @@
             android:layout_height="wrap_content"
             android:layout_centerHorizontal="true"
             android:text="Название пива"
-            android:textSize="20sp"
+            android:textSize="18sp"
             android:textStyle="bold" />
 
         <TextView
@@ -25,7 +25,7 @@
             android:layout_below="@+id/beerNameTextView"
             android:layout_centerHorizontal="true"
             android:text="0"
-            android:textSize="30sp"
+            android:textSize="26sp"
             android:textStyle="bold" />
 
     </RelativeLayout>
@@ -43,10 +43,9 @@
             style="@style/ButtonModalStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_margin="0dp"
             android:backgroundTint="@color/dull_green"
             android:text="@string/sale"
-            android:textSize="20dp"
+            android:textSize="16dp"
             android:textStyle="bold" />
 
     </RelativeLayout>
@@ -57,36 +56,36 @@
         android:layout_height="wrap_content"
         android:layout_below="@+id/sale"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="0dp"
+        android:layout_marginTop="5dp"
         android:layout_marginBottom="0dp"
         android:orientation="horizontal">
 
         <Button
             android:id="@+id/predefinedValueButton1"
             style="@style/ButtonStyle"
-            android:layout_width="70dp"
-            android:layout_height="45dp"
+            android:layout_width="64dp"
+            android:layout_height="43dp"
             android:text="1"
             android:textColor="@color/black"
-            android:textSize="20sp" />
+            android:textSize="17sp" />
 
         <Button
             android:id="@+id/predefinedValueButton2"
             style="@style/ButtonStyle"
-            android:layout_width="70dp"
-            android:layout_height="45dp"
+            android:layout_width="64dp"
+            android:layout_height="43dp"
             android:text="1.5"
             android:textColor="@color/black"
-            android:textSize="20sp" />
+            android:textSize="17sp" />
 
         <Button
             android:id="@+id/predefinedValueButton3"
             style="@style/ButtonStyle"
-            android:layout_width="70dp"
-            android:layout_height="48dp"
+            android:layout_width="64dp"
+            android:layout_height="43dp"
             android:text="2"
             android:textColor="@color/black"
-            android:textSize="20sp" />
+            android:textSize="17sp" />
 
     </LinearLayout>
 
@@ -107,7 +106,7 @@
             android:hint="0"
             android:inputType="numberDecimal"
             android:textAppearance="@style/TextAppearance.AppCompat.Large"
-            android:textSize="48sp"
+            android:textSize="42sp"
             android:textStyle="bold" />
 
         <Button
@@ -118,6 +117,7 @@
             android:layout_alignParentEnd="true"
             android:layout_alignParentBottom="true"
             android:layout_centerInParent="true"
+            android:layout_marginEnd="5dp"
             android:text="@string/add"
             android:textSize="13sp"
             android:textStyle="bold" />

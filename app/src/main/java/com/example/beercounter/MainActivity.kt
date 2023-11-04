@@ -2,17 +2,16 @@ package com.example.beercounter
 
 import android.annotation.SuppressLint
 import android.app.AlertDialog
-import android.graphics.Color
+import android.content.ContentValues
 import android.icu.text.SimpleDateFormat
 import android.net.Uri
 import android.os.Bundle
-import android.text.Spannable
-import android.text.SpannableString
-import android.text.style.ForegroundColorSpan
+import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -38,12 +37,56 @@ data class BeerButtonData(val name: String, val count: MutableLiveData<Double>) 
 
 
 class MainActivity : AppCompatActivity() {
-    private val buttonCountMap = mutableMapOf<String, MutableLiveData<Double>>()
+    private lateinit var dbHelper: MyDatabaseHelper
     private val buttonDataList = mutableListOf<BeerButtonData>()
 
     private lateinit var recyclerView: RecyclerView
     private lateinit var buttonAdapter: ButtonAdapter
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        Log.d("MainActivity", "onCreate called")
+        setContentView(R.layout.activity_main)
+
+        dbHelper = MyDatabaseHelper(this)
+        dbHelper.writableDatabase
+
+        recyclerView = findViewById(R.id.buttonsRecyclerView)
+        val numberOfColumns = resources.getInteger(R.integer.buttons_per_row)
+        recyclerView.layoutManager = GridLayoutManager(this, numberOfColumns)
+        buttonAdapter = ButtonAdapter(buttonDataList) { buttonData ->
+            showCounterDialog(buttonData)
+        }
+        recyclerView.adapter = buttonAdapter
+
+        if (isDatabaseAvailable()) {
+            loadButtonDataFromDatabase()
+        } else {
+            Toast.makeText(this, "База данных не существует", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun isDatabaseAvailable(): Boolean {
+        val databaseFile = getDatabasePath("beer_data.db")
+        return databaseFile.exists()
+    }
+
+    @SuppressLint("NotifyDataSetChanged")
+    private fun insertDataToDatabase(buttonDataList: List<BeerButtonData>) {
+        // Очистим существующие данные в базе данных
+        val database = dbHelper.writableDatabase
+        database.delete("beer_table", null, null)
+
+        // Вставляем новые данные из списка
+        for (beerButtonData in buttonDataList) {
+            val values = ContentValues()
+            values.put("name", beerButtonData.name)
+            values.put("count", beerButtonData.count.value)
+
+            // Вставляем данные в базу данных
+            database.insert("beer_table", null, values)
+        }
+    }
 
     private val openExcelDocument: ActivityResultLauncher<Array<String>> =
         registerForActivityResult(
@@ -73,17 +116,48 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+    @SuppressLint("Range", "NotifyDataSetChanged")
+    private fun loadButtonDataFromDatabase() {
+        // Загрузка данных из базы данных и заполнение buttonDataList
+        val database = dbHelper.readableDatabase
+        val projection = arrayOf("name", "count")
+        val cursor = database.query("beer_table", projection, null, null, null, null, null)
+        if (cursor != null) {
+            if (cursor.moveToFirst()) {
+                Log.d("loadButtonDataFromDatabase", "Cursor moveToFirst() successful")
+                do {
+                    val name = cursor.getString(cursor.getColumnIndex("name"))
+                    val count = cursor.getDouble(cursor.getColumnIndex("count"))
+                    val liveData = MutableLiveData(count)
+                    buttonDataList.add(BeerButtonData(name, liveData))
 
-        recyclerView = findViewById(R.id.buttonsRecyclerView)
-        val numberOfColumns = resources.getInteger(R.integer.buttons_per_row)
-        recyclerView.layoutManager = GridLayoutManager(this, numberOfColumns)
-        buttonAdapter = ButtonAdapter(buttonDataList) { buttonData ->
-            showCounterDialog(buttonData)
+                    Log.d("loadButtonDataFromDatabase", "Name: $name, Count: $count")
+                } while (cursor.moveToNext())
+
+                cursor.close()
+
+                // Уведомить адаптер об изменении данных
+                buttonAdapter.notifyDataSetChanged()
+            }
         }
-        recyclerView.adapter = buttonAdapter
+    }
+
+
+    private fun updateButtonDataInDatabase() {
+        // Обновление данных в базе данных
+        val database = dbHelper.writableDatabase
+
+        for (buttonData in buttonDataList) {
+            val values = ContentValues().apply {
+                put("name", buttonData.name)
+                put("count", buttonData.count.value ?: 0.0)
+            }
+
+            val selection = "name = ?"
+            val selectionArgs = arrayOf(buttonData.name)
+            database.update("beer_table", values, selection, selectionArgs)
+
+        }
     }
 
 
@@ -109,6 +183,8 @@ class MainActivity : AppCompatActivity() {
             }
 
             workbook.close()
+
+            insertDataToDatabase(buttonDataList)
 
             buttonAdapter.notifyDataSetChanged() // Обновляем адаптер после изменения списка кнопок
         } catch (e: InvalidFormatException) {
@@ -151,11 +227,15 @@ class MainActivity : AppCompatActivity() {
     }
 
 
+    @SuppressLint("SetTextI18n")
     private fun showCounterDialog(buttonData: BeerButtonData) {
         val builder = AlertDialog.Builder(this)
         val inflater = layoutInflater
         val dialogView = inflater.inflate(R.layout.dialog_counter, null)
         builder.setView(dialogView)
+        val dialog = builder.create()
+        dialog.show()
+
         val beerNameTextView = dialogView.findViewById<TextView>(R.id.beerNameTextView)
         val buttonName = buttonData.name
         beerNameTextView.text = buttonName
@@ -168,35 +248,11 @@ class MainActivity : AppCompatActivity() {
         val predefinedValueButton3 = dialogView.findViewById<Button>(R.id.predefinedValueButton3)
         val customValueEditText = dialogView.findViewById<EditText>(R.id.customValueEditText)
 
-        // Получить начальное значение из buttonData
-        val initialValue = buttonData.count.value ?: 0.0
-
+        @SuppressLint("SetTextI18n")
         fun updateButtonCountText() {
             val currentCount = buttonData.count.value ?: 0.0
-            val text: String
-            val delta: String
-            val colorSpan: ForegroundColorSpan
-            val greenColor = Color.parseColor("#008000")
-
-            if (currentCount > initialValue) {
-                delta = "+ %.1f".format(currentCount - initialValue)
-                colorSpan =
-                    ForegroundColorSpan(greenColor) // Зеленый цвет для прибавленного значения
-            } else if (currentCount < initialValue) {
-                delta = "- %.1f".format(initialValue - currentCount)
-                colorSpan = ForegroundColorSpan(Color.RED) // Красный цвет для отнятого значения
-            } else {
-                delta = ""
-                colorSpan = ForegroundColorSpan(Color.BLACK) // Черный цвет, если изменений нет
-            }
-
-            text = "%.1f л %s".format(currentCount, delta)
-            val spannable = SpannableString(text)
-            val deltaStart = text.indexOf(delta)
-            val deltaEnd = deltaStart + delta.length
-            spannable.setSpan(colorSpan, deltaStart, deltaEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
-
-            counterTextView.text = spannable
+            val text = "%.1f л".format(currentCount)
+            counterTextView.text = text
 
             // Обновляем текст на кнопке в адаптере
             buttonAdapter.updateButtonValue(buttonData, currentCount)
@@ -210,112 +266,56 @@ class MainActivity : AppCompatActivity() {
             val customValue = customValueEditText.text.toString().toDoubleOrNull() ?: 0.0
             val newCount = currentCount + customValue
             buttonData.updateValue(newCount)
-            customValueEditText.text.clear()
-            val newText = "%.1f л + %.1f".format(newCount, customValue)
-            val spannable = SpannableString(newText)
-            // Устанавливаем цвет для второй части текста (отнятой суммы)
-            spannable.setSpan(
-                ForegroundColorSpan(Color.GREEN),
-                newText.indexOf('+') + 1,
-                newText.length,
-                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-            )
-            counterTextView.text = spannable
             updateButtonCountText()
 
+            val toastMessage = "Принято $customValue л  $buttonName"
+            Toast.makeText(this, toastMessage, Toast.LENGTH_LONG).show()
+
+            updateButtonDataInDatabase() // Вызываем метод для обновления данных в базе
+
+            dialog.dismiss()
         }
 
 
         saleButton.setOnClickListener {
             val currentCount = buttonData.count.value ?: 0.0
             val customValue = customValueEditText.text.toString().toDoubleOrNull() ?: 0.0
+
             if (currentCount >= customValue) {
                 val newCount = currentCount - customValue
                 buttonData.updateValue(newCount)
-                customValueEditText.text.clear()
-                val newText = "%.1f л - %.1f".format(newCount, customValue)
-                val spannable = SpannableString(newText)
-                spannable.setSpan(
-                    ForegroundColorSpan(Color.RED),
-                    newText.indexOf('-') + 1,
-                    newText.length,
-                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-                )
-                counterTextView.text = spannable
                 updateButtonCountText()
 
+                val toastMessage = "Продано $customValue л  $buttonName"
+                Toast.makeText(this, toastMessage, Toast.LENGTH_LONG).show()
+
+                updateButtonDataInDatabase() // Вызываем метод для обновления данных в базе
+
+                dialog.dismiss()
+            } else {
+                Toast.makeText(this, "Недостаточно пива для продажи", Toast.LENGTH_LONG).show()
             }
         }
 
+
         predefinedValueButton1.setOnClickListener {
-            val currentCount = buttonData.count.value ?: 0.0
             val predefinedValue = 1.0
-
-            if (currentCount >= predefinedValue) {
-                val newCount = currentCount - predefinedValue
-                buttonData.updateValue(newCount)
-                val newText = "%.1f л - %.1f".format(newCount, predefinedValue)
-                val spannable = SpannableString(newText)
-                spannable.setSpan(
-                    ForegroundColorSpan(Color.RED),
-                    newText.indexOf('-') + 1,
-                    newText.length,
-                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-                )
-                counterTextView.text = spannable
-                updateButtonCountText()
-
-            }
+            val currentValue = customValueEditText.text.toString().toDoubleOrNull() ?: 0.0
+            customValueEditText.setText((currentValue + predefinedValue).toString())
         }
 
         predefinedValueButton2.setOnClickListener {
-            val currentCount = buttonData.count.value ?: 0.0
             val predefinedValue = 1.5
-
-            if (currentCount >= predefinedValue) {
-                val newCount = currentCount - predefinedValue
-                buttonData.updateValue(newCount)
-                val newText = "%.1f л - %.1f".format(newCount, predefinedValue)
-                val spannable = SpannableString(newText)
-                spannable.setSpan(
-                    ForegroundColorSpan(Color.RED),
-                    newText.indexOf('-') + 1,
-                    newText.length,
-                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-                )
-                counterTextView.text = spannable
-                updateButtonCountText()
-
-            }
+            val currentValue = customValueEditText.text.toString().toDoubleOrNull() ?: 0.0
+            customValueEditText.setText((currentValue + predefinedValue).toString())
         }
 
         predefinedValueButton3.setOnClickListener {
-            val currentCount = buttonData.count.value ?: 0.0
             val predefinedValue = 2.0
-
-            if (currentCount >= predefinedValue) {
-                val newCount = currentCount - predefinedValue
-                buttonData.updateValue(newCount)
-                val newText = "%.1f л - %.1f".format(newCount, predefinedValue)
-                val spannable = SpannableString(newText)
-                spannable.setSpan(
-                    ForegroundColorSpan(Color.RED),
-                    newText.indexOf('-') + 1,
-                    newText.length,
-                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-                )
-                counterTextView.text = spannable
-                updateButtonCountText()
-
-            }
+            val currentValue = customValueEditText.text.toString().toDoubleOrNull() ?: 0.0
+            customValueEditText.setText((currentValue + predefinedValue).toString())
         }
 
-        builder.setPositiveButton("Закрыть") { dialog, _ ->
-            updateButtonCountText()
-            dialog.dismiss()
-        }
-
-        builder.create().show()
     }
 
 }

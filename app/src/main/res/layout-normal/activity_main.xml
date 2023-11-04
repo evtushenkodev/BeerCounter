@@ -9,39 +9,33 @@
         android:id="@+id/buttonsRecyclerView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_above="@+id/down"
-        android:backgroundTint="@color/brick"
         android:layout_alignParentTop="true" />
 
-    <RelativeLayout
-        android:id="@+id/down"
-        android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:layout_alignParentBottom="true">
+    <Button
+        android:id="@+id/chooseFileButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_marginVertical="8dp"
+        android:layout_marginStart="16dp"
+        android:background="#8DFFFFFF"
+        android:onClick="onChooseFileButtonClick"
+        android:text="@string/choose_file"
+        android:textSize="16sp"
+        android:theme="@style/Base.Theme.BeerCounter" />
 
-        <Button
-            android:id="@+id/chooseFileButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_centerVertical="true"
-            android:onClick="onChooseFileButtonClick"
-            android:layout_alignParentBottom="true"
-            android:text="@string/choose_file"
-            android:theme="@style/Base.Theme.BeerCounter"/>
-
-        <Button
-            android:id="@+id/saveFileButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="16dp"
-            android:layout_centerVertical="true"
-            android:layout_alignParentEnd="true"
-            android:onClick="onSaveButtonClick"
-            android:layout_alignParentBottom="true"
-            android:text="@string/save_file"
-            android:theme="@style/Base.Theme.BeerCounter"/>
-
-    </RelativeLayout>
+    <Button
+        android:id="@+id/saveFileButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginVertical="8dp"
+        android:layout_marginEnd="16dp"
+        android:background="#8DFFFFFF"
+        android:onClick="onSaveButtonClick"
+        android:text="@string/save_file"
+        android:textSize="16sp"
+        android:theme="@style/Base.Theme.BeerCounter" />
 
 </RelativeLayout>

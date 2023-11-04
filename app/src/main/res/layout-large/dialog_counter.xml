@@ -45,8 +45,8 @@
             android:layout_height="wrap_content"
             android:backgroundTint="@color/dull_green"
             android:text="@string/sale"
-            android:textStyle="bold"
-            android:textSize="40dp"/>
+            android:textSize="40dp"
+            android:textStyle="bold" />
 
     </RelativeLayout>
 
@@ -117,6 +117,7 @@
             android:layout_alignParentEnd="true"
             android:layout_alignParentBottom="true"
             android:layout_centerInParent="true"
+            android:layout_marginEnd="5dp"
             android:text="@string/add"
             android:textStyle="bold" />
 

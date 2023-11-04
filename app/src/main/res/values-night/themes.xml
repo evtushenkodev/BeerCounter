@@ -1,4 +1,7 @@
-<?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <integer name="buttons_per_row" tools:ignore="MissingDefaultResource">5</integer>
+    <!-- Base application theme. -->
+    <style name="Theme.BeerCounter" parent="Base.Theme.BeerCounter">
+        <!-- Customize your dark theme here. -->
+        <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
+    </style>
 </resources>

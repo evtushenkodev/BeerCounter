@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <dimen name="button_margin">8dp</dimen>
-    <integer name="buttons_per_row">5</integer>
+    <integer name="buttons_per_row">6</integer>
 </resources>
