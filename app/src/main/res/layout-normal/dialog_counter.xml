@@ -30,79 +30,17 @@
 
     </RelativeLayout>
 
-    <LinearLayout
-        android:id="@+id/sale"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/upper"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="50dp">
-
-        <Button
-            android:id="@+id/saleButton"
-            style="@style/ButtonModalStyle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:backgroundTint="@color/dull_green"
-            android:text="@string/sale"
-            android:textSize="20dp"
-            android:textStyle="bold" />
-
-    </LinearLayout>
-
-    <LinearLayout
-        android:id="@+id/hotKeys"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/sale"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="5dp"
-        android:layout_marginBottom="0dp"
-        android:orientation="horizontal">
-
-        <Button
-            android:id="@+id/predefinedValueButton1"
-            style="@style/ButtonStyle"
-            android:layout_width="66dp"
-            android:layout_height="44dp"
-            android:text="1"
-            android:textColor="@color/black"
-            android:textSize="18sp" />
-
-        <Button
-            android:id="@+id/predefinedValueButton2"
-            style="@style/ButtonStyle"
-            android:layout_width="66dp"
-            android:layout_height="44dp"
-            android:layout_marginHorizontal="10dp"
-            android:text="1.5"
-            android:textColor="@color/black"
-            android:textSize="18sp" />
-
-        <Button
-            android:id="@+id/predefinedValueButton3"
-            style="@style/ButtonStyle"
-            android:layout_width="66dp"
-            android:layout_height="44dp"
-            android:text="2"
-            android:textColor="@color/black"
-            android:textSize="18sp" />
-
-    </LinearLayout>
-
     <RelativeLayout
-        android:layout_width="match_parent"
+        android:id="@+id/center"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/hotKeys"
-        android:layout_alignParentBottom="true"
-        android:layout_marginTop="0dp"
-        android:layout_marginBottom="0dp">
+        android:layout_centerInParent="true">
 
         <EditText
             android:id="@+id/customValueEditText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignParentBottom="true"
+            android:layout_alignParentTop="true"
             android:layout_centerInParent="true"
             android:hint="0"
             android:inputType="numberDecimal"
@@ -110,8 +48,70 @@
             android:textSize="46sp"
             android:textStyle="bold" />
 
+        <LinearLayout
+            android:id="@+id/hotKeys"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/customValueEditText"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="30dp"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/predefinedValueButton1"
+                style="@style/ButtonStyle"
+                android:layout_width="66dp"
+                android:layout_height="44dp"
+                android:text="1"
+                android:textColor="@color/black"
+                android:textSize="18sp" />
+
+            <Button
+                android:id="@+id/predefinedValueButton2"
+                style="@style/ButtonStyle"
+                android:layout_width="66dp"
+                android:layout_height="44dp"
+                android:layout_marginHorizontal="15dp"
+                android:text="1.5"
+                android:textColor="@color/black"
+                android:textSize="18sp" />
+
+            <Button
+                android:id="@+id/predefinedValueButton3"
+                style="@style/ButtonStyle"
+                android:layout_width="66dp"
+                android:layout_height="44dp"
+                android:text="2"
+                android:textColor="@color/black"
+                android:textSize="18sp" />
+
+        </LinearLayout>
+
+    </RelativeLayout>
+
+
+    <RelativeLayout
+        android:id="@+id/down"
+        android:layout_width="match_parent"
+        android:layout_height="45dp"
+        android:layout_alignParentBottom="true">
+
+
         <Button
             android:id="@+id/addButton"
+            style="@style/ButtonModalStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentBottom="true"
+            android:layout_centerInParent="true"
+            android:layout_marginStart="5dp"
+            android:text="@string/add"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/saleButton"
             style="@style/ButtonModalStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -119,10 +119,12 @@
             android:layout_alignParentBottom="true"
             android:layout_centerInParent="true"
             android:layout_marginEnd="5dp"
-            android:text="@string/add"
-            android:textSize="15sp"
-            android:textStyle="bold" />
+            android:backgroundTint="@color/dull_green"
+            android:text="@string/sale"
+            android:textStyle="bold"
+            android:textSize="20dp"/>
 
     </RelativeLayout>
+
 
 </RelativeLayout>

@@ -269,7 +269,7 @@ class MainActivity : AppCompatActivity() {
             updateButtonCountText()
 
             val toastMessage = "Принято $customValue л  $buttonName"
-            Toast.makeText(this, toastMessage, Toast.LENGTH_LONG).show()
+            Toast.makeText(this, toastMessage, Toast.LENGTH_SHORT).show()
 
             updateButtonDataInDatabase() // Вызываем метод для обновления данных в базе
 
@@ -287,13 +287,13 @@ class MainActivity : AppCompatActivity() {
                 updateButtonCountText()
 
                 val toastMessage = "Продано $customValue л  $buttonName"
-                Toast.makeText(this, toastMessage, Toast.LENGTH_LONG).show()
+                Toast.makeText(this, toastMessage, Toast.LENGTH_SHORT).show()
 
                 updateButtonDataInDatabase() // Вызываем метод для обновления данных в базе
 
                 dialog.dismiss()
             } else {
-                Toast.makeText(this, "Недостаточно пива для продажи", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "Недостаточно пива для продажи", Toast.LENGTH_SHORT).show()
             }
         }
 

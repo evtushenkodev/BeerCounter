@@ -10,7 +10,7 @@
         <Button
             android:id="@+id/beerButton"
             style="@style/ButtonStyle"
-            android:textSize="26dp"
+            android:textSize="22dp"
             android:text="Жигулёвское&#10;&#10;20 л."/>
 
 </LinearLayout>
