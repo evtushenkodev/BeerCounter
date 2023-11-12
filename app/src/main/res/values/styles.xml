@@ -7,6 +7,7 @@
         <item name="android:background">@drawable/button_background</item>
         <item name="android:textColor">@color/black</item>
     </style>
+
     <style name="ButtonModalStyle" parent="Widget.MaterialComponents.Button">
         <item name="android:layout_height">wrap_content</item>
         <item name="android:textSize">25sp</item>

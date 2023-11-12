@@ -63,7 +63,7 @@
                 android:layout_width="150dp"
                 android:layout_height="110dp"
                 android:text="1"
-                android:textColor="@color/black"
+                android:theme="@style/Theme.BeerCounterModal"
                 android:textSize="55sp" />
 
             <Button
@@ -73,7 +73,7 @@
                 android:layout_height="110dp"
                 android:layout_marginHorizontal="30dp"
                 android:text="1.5"
-                android:textColor="@color/black"
+                android:theme="@style/Theme.BeerCounterModal"
                 android:textSize="55sp" />
 
             <Button
@@ -82,7 +82,7 @@
                 android:layout_width="150dp"
                 android:layout_height="110dp"
                 android:text="2"
-                android:textColor="@color/black"
+                android:theme="@style/Theme.BeerCounterModal"
                 android:textSize="55sp" />
 
         </LinearLayout>
@@ -96,7 +96,6 @@
         android:layout_height="75dp"
         android:layout_alignParentBottom="true">
 
-
         <Button
             android:id="@+id/addButton"
             style="@style/ButtonModalStyle"
@@ -107,7 +106,7 @@
             android:layout_centerInParent="true"
             android:layout_marginStart="5dp"
             android:text="@string/add"
-            android:textSize="40sp"
+            android:textSize="30sp"
             android:textStyle="bold" />
 
         <Button
@@ -125,6 +124,5 @@
             android:textStyle="bold" />
 
     </RelativeLayout>
-
 
 </RelativeLayout>

@@ -8,4 +8,8 @@
     <style name="Theme.BeerCounter" parent="Base.Theme.BeerCounter">
         <item name="colorPrimary">@color/brick</item>
     </style>
+
+    <style name="Theme.BeerCounterModal" parent="Base.Theme.BeerCounter">
+        <item name="colorPrimary">@color/dull_green</item>
+    </style>
 </resources>
