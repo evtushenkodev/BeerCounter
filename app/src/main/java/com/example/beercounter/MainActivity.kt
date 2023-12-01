@@ -39,10 +39,12 @@ data class BeerButtonData(val name: String, val count: MutableLiveData<Double>) 
 class MainActivity : AppCompatActivity() {
     private lateinit var dbHelper: MyDatabaseHelper
     private val buttonDataList = mutableListOf<BeerButtonData>()
-
     private lateinit var recyclerView: RecyclerView
     private lateinit var buttonAdapter: ButtonAdapter
+    private val initialBeerCounts = mutableMapOf<String, Double>()
+    private var isShiftOpen = false
 
+    @SuppressLint("MissingInflatedId")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.d("MainActivity", "onCreate called")
@@ -63,6 +65,40 @@ class MainActivity : AppCompatActivity() {
             loadButtonDataFromDatabase()
         } else {
             Toast.makeText(this, "База данных не существует", Toast.LENGTH_SHORT).show()
+        }
+
+        val openShiftButton = findViewById<Button>(R.id.openShiftButton)
+        val closeShiftButton = findViewById<Button>(R.id.closeShiftButton)
+
+        openShiftButton.setOnClickListener { openShift() }
+        closeShiftButton.setOnClickListener { closeShift() }
+    }
+
+    private fun openShift() {
+        if (!isShiftOpen) {
+            isShiftOpen = true
+            Toast.makeText(this, "Смена открыта", Toast.LENGTH_SHORT).show()
+
+            // Записываем начальные значения количества пива
+            buttonDataList.forEach { beerButtonData ->
+                initialBeerCounts[beerButtonData.name] = beerButtonData.count.value ?: 0.0
+            }
+        } else {
+            Toast.makeText(this, "Смена уже открыта", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun closeShift() {
+        if (isShiftOpen) {
+            isShiftOpen = false
+            Toast.makeText(this, "Смена закрыта", Toast.LENGTH_SHORT).show()
+
+            val beerDifferences = calculateBeerDifferences()
+            val currentDate = SimpleDateFormat("ddMMyyyy", Locale.getDefault()).format(Date())
+            val fileName = "shift_data_$currentDate.xlsx"
+            saveExcelDocument.launch(fileName) // Запускаем сохранение файла с выбранным именем
+        } else {
+            Toast.makeText(this, "Смена уже закрыта", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -100,10 +136,20 @@ class MainActivity : AppCompatActivity() {
     private val saveExcelDocument =
         registerForActivityResult(ActivityResultContracts.CreateDocument()) { uri ->
             if (uri != null) {
-                // Сохраняем данные в файл при выборе места сохранения
-                saveDataToExcelFile(uri)
+                val beerDifferences = calculateBeerDifferences()
+                saveDataToExcelFile(uri, beerDifferences) // Сохраняем данные в файл
             }
         }
+
+    private fun calculateBeerDifferences(): List<Triple<String, Double, Double>> {
+        // Вычисляем разницу в количестве пива
+        return buttonDataList.map { beerButtonData ->
+            val initialCount = initialBeerCounts[beerButtonData.name] ?: 0.0
+            val currentCount = beerButtonData.count.value ?: 0.0
+            val difference = currentCount - initialCount
+            Triple(beerButtonData.name, initialCount, difference)
+        }
+    }
 
     fun onChooseFileButtonClick(view: View) {
         openExcelDocument.launch(arrayOf("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
@@ -200,27 +246,29 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun saveDataToExcelFile(fileUri: Uri) {
+    private fun saveDataToExcelFile(uri: Uri, beerDifferences: List<Triple<String, Double, Double>>) {
         try {
             val workbook: Workbook = XSSFWorkbook()
-            val sheet = workbook.createSheet("Data")
+            val sheet = workbook.createSheet("Shift Data")
 
-            for ((index, buttonData) in buttonDataList.withIndex()) {
+            for ((index, data) in beerDifferences.withIndex()) {
+                val (name, initialCount, difference) = data
                 val row = sheet.createRow(index)
                 val cellName = row.createCell(0)
-                val cellValue = row.createCell(1)
+                val cellInitialCount = row.createCell(1)
+                val cellDifference = row.createCell(2)
 
-                cellName.setCellValue(buttonData.name)
-                cellValue.setCellValue(buttonData.count.value ?: 0.0)
+                cellName.setCellValue(name)
+                cellInitialCount.setCellValue(initialCount)
+                cellDifference.setCellValue(difference)
             }
 
-            val outputStream = contentResolver.openOutputStream(fileUri)
-
-            if (outputStream != null) {
-                workbook.write(outputStream)
-                outputStream.close()
-                workbook.close()
+            val outputStream = contentResolver.openOutputStream(uri)
+            outputStream?.let {
+                workbook.write(it)
+                it.close()
             }
+            workbook.close()
         } catch (e: Exception) {
             e.printStackTrace()
         }

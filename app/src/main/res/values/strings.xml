@@ -4,4 +4,6 @@
     <string name="add">Приёмка</string>
     <string name="save_file">Сохранить файл</string>
     <string name="choose_file">Выбрать файл</string>
+    <string name="open_shift">Открыть смену</string>
+    <string name="close_shift">Закрыть смену</string>
 </resources>

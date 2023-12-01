@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/bg">
@@ -16,17 +17,46 @@
         android:id="@+id/chooseFileButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_marginStart="5dp"
+        android:layout_marginTop="5dp"
+        android:background="#8DFFFFFF"
+        android:onClick="onChooseFileButtonClick"
+        android:text="@string/choose_file"
+        android:textSize="13sp"
+        android:theme="@style/Base.Theme.BeerCounter"
+        tools:ignore="TextContrastCheck" />
+
+    <Button
+        android:id="@+id/saveFileButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginTop="5dp"
+        android:layout_marginEnd="5dp"
+        android:background="#8DFFFFFF"
+        android:onClick="onSaveButtonClick"
+        android:text="@string/save_file"
+        android:textSize="13sp"
+        android:theme="@style/Base.Theme.BeerCounter"
+        tools:ignore="TextContrastCheck" />
+
+    <Button
+        android:id="@+id/openShiftButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:layout_marginVertical="8dp"
         android:layout_marginStart="16dp"
         android:background="#8DFFFFFF"
         android:onClick="onChooseFileButtonClick"
-        android:text="@string/choose_file"
+        android:text="@string/open_shift"
         android:textSize="22sp"
         android:theme="@style/Base.Theme.BeerCounter" />
 
     <Button
-        android:id="@+id/saveFileButton"
+        android:id="@+id/closeShiftButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentEnd="true"
@@ -35,7 +65,7 @@
         android:layout_marginEnd="16dp"
         android:background="#8DFFFFFF"
         android:onClick="onSaveButtonClick"
-        android:text="@string/save_file"
+        android:text="@string/close_shift"
         android:textSize="22sp"
         android:theme="@style/Base.Theme.BeerCounter" />
 
