@@ -43,12 +43,26 @@ class MainActivity : AppCompatActivity() {
     private lateinit var buttonAdapter: ButtonAdapter
     private val initialBeerCounts = mutableMapOf<String, Double>()
     private var isShiftOpen = false
+    private lateinit var chooseFileButton: Button
+    private lateinit var openShiftButton: Button
+    private lateinit var closeShiftButton: Button
 
     @SuppressLint("MissingInflatedId")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Log.d("MainActivity", "onCreate called")
         setContentView(R.layout.activity_main)
+
+        chooseFileButton = findViewById(R.id.chooseFileButton)
+        chooseFileButton.visibility = View.VISIBLE
+
+        openShiftButton = findViewById(R.id.openShiftButton)
+        closeShiftButton = findViewById(R.id.closeShiftButton)
+
+        openShiftButton.setOnClickListener { openShift() }
+        closeShiftButton.setOnClickListener { closeShift() }
+
+        openShiftButton.visibility = View.VISIBLE
+        closeShiftButton.visibility = View.GONE
 
         dbHelper = MyDatabaseHelper(this)
         dbHelper.writableDatabase
@@ -66,12 +80,6 @@ class MainActivity : AppCompatActivity() {
         } else {
             Toast.makeText(this, "База данных не существует", Toast.LENGTH_SHORT).show()
         }
-
-        val openShiftButton = findViewById<Button>(R.id.openShiftButton)
-        val closeShiftButton = findViewById<Button>(R.id.closeShiftButton)
-
-        openShiftButton.setOnClickListener { openShift() }
-        closeShiftButton.setOnClickListener { closeShift() }
     }
 
     private fun openShift() {
@@ -82,9 +90,10 @@ class MainActivity : AppCompatActivity() {
             // Записываем начальные значения количества пива
             buttonDataList.forEach { beerButtonData ->
                 initialBeerCounts[beerButtonData.name] = beerButtonData.count.value ?: 0.0
+                openShiftButton.visibility = View.GONE
+                closeShiftButton.visibility = View.VISIBLE
+                chooseFileButton.visibility = View.GONE
             }
-        } else {
-            Toast.makeText(this, "Смена уже открыта", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -97,8 +106,9 @@ class MainActivity : AppCompatActivity() {
             val currentDate = SimpleDateFormat("ddMMyyyy", Locale.getDefault()).format(Date())
             val fileName = "shift_data_$currentDate.xlsx"
             saveExcelDocument.launch(fileName) // Запускаем сохранение файла с выбранным именем
-        } else {
-            Toast.makeText(this, "Смена уже закрыта", Toast.LENGTH_SHORT).show()
+            closeShiftButton.visibility = View.GONE
+            openShiftButton.visibility = View.VISIBLE
+            chooseFileButton.visibility = View.VISIBLE
         }
     }
 
