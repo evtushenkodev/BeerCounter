@@ -30,9 +30,13 @@ import java.util.Date
 import java.util.Locale
 
 
-data class BeerButtonData(val name: String, val count: MutableLiveData<Double>) {
-    // Метод для обновления значения в объекте BeerButtonData
-    fun updateValue(newValue: Double) {
+data class BeerButtonData(val name: String, val count: MutableLiveData<Double>, var received: Double = 0.0, var sold: Double = 0.0) {
+    fun updateValue(newValue: Double, isReceived: Boolean) {
+        if (isReceived) {
+            received += newValue - (count.value ?: 0.0)
+        } else {
+            sold += (count.value ?: 0.0) - newValue
+        }
         count.value = newValue
     }
 }
@@ -195,13 +199,12 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-    private fun calculateBeerDifferences(): List<Triple<String, Double, Double>> {
-        // Вычисляем разницу в количестве пива
+    private fun calculateBeerDifferences(): List<BeerData> {
         return buttonDataList.map { beerButtonData ->
             val initialCount = initialBeerCounts[beerButtonData.name] ?: 0.0
             val currentCount = beerButtonData.count.value ?: 0.0
             val difference = currentCount - initialCount
-            Triple(beerButtonData.name, initialCount, difference)
+            BeerData(beerButtonData.name, currentCount, beerButtonData.received, beerButtonData.sold)
         }
     }
 
@@ -300,23 +303,42 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun saveDataToExcelFile(uri: Uri, beerDifferences: List<Triple<String, Double, Double>>) {
+    private fun saveDataToExcelFile(uri: Uri, beerData: List<BeerData>) {
         try {
             val workbook: Workbook = XSSFWorkbook()
             val sheet = workbook.createSheet("Shift Data")
 
-            for ((index, data) in beerDifferences.withIndex()) {
-                val (name, initialCount, difference) = data
-                val row = sheet.createRow(index)
-                val cellName = row.createCell(0)
-                val cellInitialCount = row.createCell(1)
-                val cellDifference = row.createCell(2)
+            // Создаем заголовки для колонок
+            val headerRow = sheet.createRow(0)
+            headerRow.createCell(0).setCellValue("Название пива")
+            headerRow.createCell(1).setCellValue("Остаток на конец смены")
+            headerRow.createCell(2).setCellValue("Принято")
+            headerRow.createCell(3).setCellValue("Продано")
 
-                cellName.setCellValue(name)
-                cellInitialCount.setCellValue(initialCount)
-                cellDifference.setCellValue(difference)
+            var totalEnd = 0.0
+            var totalReceived = 0.0
+            var totalSold = 0.0
+
+            for ((index, data) in beerData.withIndex()) {
+                val row = sheet.createRow(index + 1)
+                row.createCell(0).setCellValue(data.name)
+                row.createCell(1).setCellValue(data.endAmount)
+                row.createCell(2).setCellValue(data.received)
+                row.createCell(3).setCellValue(data.sold)
+
+                totalEnd += data.endAmount
+                totalReceived += data.received
+                totalSold += data.sold
             }
 
+            // Добавляем строку с общими суммами
+            val totalRow = sheet.createRow(beerData.size + 1)
+            totalRow.createCell(0).setCellValue("Итого")
+            totalRow.createCell(1).setCellValue(totalEnd)
+            totalRow.createCell(2).setCellValue(totalReceived)
+            totalRow.createCell(3).setCellValue(totalSold)
+
+            // Сохраняем файл
             val outputStream = contentResolver.openOutputStream(uri)
             outputStream?.let {
                 workbook.write(it)
@@ -357,7 +379,7 @@ class MainActivity : AppCompatActivity() {
             counterTextView.text = text
 
             // Обновляем текст на кнопке в адаптере
-            buttonAdapter.updateButtonValue(buttonData, currentCount)
+            buttonAdapter.updateButtonDisplay(buttonData, currentCount)
         }
 
         // Установить начальное значение в counterTextView
@@ -367,7 +389,7 @@ class MainActivity : AppCompatActivity() {
             val currentCount = buttonData.count.value ?: 0.0
             val customValue = customValueEditText.text.toString().toDoubleOrNull() ?: 0.0
             val newCount = currentCount + customValue
-            buttonData.updateValue(newCount)
+            buttonData.updateValue(newCount, true) // Передаем true, так как это прием пива
             updateButtonCountText()
 
             val toastMessage = "Принято $customValue л  $buttonName"
@@ -382,10 +404,9 @@ class MainActivity : AppCompatActivity() {
         saleButton.setOnClickListener {
             val currentCount = buttonData.count.value ?: 0.0
             val customValue = customValueEditText.text.toString().toDoubleOrNull() ?: 0.0
-
             if (currentCount >= customValue) {
                 val newCount = currentCount - customValue
-                buttonData.updateValue(newCount)
+                buttonData.updateValue(newCount, false) // Передаем false, так как это продажа пива
                 updateButtonCountText()
 
                 val toastMessage = "Продано $customValue л  $buttonName"
@@ -421,3 +442,5 @@ class MainActivity : AppCompatActivity() {
     }
 
 }
+
+data class BeerData(val name: String, val endAmount: Double, val received: Double, val sold: Double)

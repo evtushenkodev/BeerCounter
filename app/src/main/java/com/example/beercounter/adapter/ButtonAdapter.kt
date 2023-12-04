@@ -89,10 +89,10 @@ class ButtonAdapter(private val buttonDataList: List<BeerButtonData>, private va
         holder.button.layoutParams = layoutParams
     }
 
-    fun updateButtonValue(buttonData: BeerButtonData, newValue: Double) {
+    fun updateButtonDisplay(buttonData: BeerButtonData, newValue: Double) {
         val position = buttonDataList.indexOf(buttonData)
         if (position != -1) {
-            buttonDataList[position].updateValue(newValue)
+            buttonDataList[position].count.value = newValue
             notifyItemChanged(position)
         }
     }
