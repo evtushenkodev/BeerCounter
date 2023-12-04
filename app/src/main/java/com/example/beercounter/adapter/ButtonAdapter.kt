@@ -77,7 +77,6 @@ class ButtonAdapter(private val buttonDataList: List<BeerButtonData>, private va
     }
 
 
-
     override fun getItemCount(): Int {
         return buttonDataList.size
     }

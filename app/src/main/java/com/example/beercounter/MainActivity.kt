@@ -3,6 +3,8 @@ package com.example.beercounter
 import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.content.ContentValues
+import android.content.Context
+import android.content.SharedPreferences
 import android.icu.text.SimpleDateFormat
 import android.net.Uri
 import android.os.Bundle
@@ -46,6 +48,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var chooseFileButton: Button
     private lateinit var openShiftButton: Button
     private lateinit var closeShiftButton: Button
+    private lateinit var sharedPreferences: SharedPreferences
 
     @SuppressLint("MissingInflatedId")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -75,6 +78,12 @@ class MainActivity : AppCompatActivity() {
         }
         recyclerView.adapter = buttonAdapter
 
+        sharedPreferences = getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
+        isShiftOpen = sharedPreferences.getBoolean("isShiftOpen", false)
+
+        updateRecyclerViewVisibility()
+        updateButtonsVisibility()
+
         if (isDatabaseAvailable()) {
             loadButtonDataFromDatabase()
         } else {
@@ -85,6 +94,9 @@ class MainActivity : AppCompatActivity() {
     private fun openShift() {
         if (!isShiftOpen) {
             isShiftOpen = true
+            saveShiftState()
+            updateButtonsVisibility()
+            updateRecyclerViewVisibility()
             Toast.makeText(this, "Смена открыта", Toast.LENGTH_SHORT).show()
 
             // Записываем начальные значения количества пива
@@ -99,17 +111,49 @@ class MainActivity : AppCompatActivity() {
 
     private fun closeShift() {
         if (isShiftOpen) {
-            isShiftOpen = false
-            Toast.makeText(this, "Смена закрыта", Toast.LENGTH_SHORT).show()
-
-            val beerDifferences = calculateBeerDifferences()
-            val currentDate = SimpleDateFormat("ddMMyyyy", Locale.getDefault()).format(Date())
-            val fileName = "shift_data_$currentDate.xlsx"
-            saveExcelDocument.launch(fileName) // Запускаем сохранение файла с выбранным именем
-            closeShiftButton.visibility = View.GONE
-            openShiftButton.visibility = View.VISIBLE
-            chooseFileButton.visibility = View.VISIBLE
+            // Создание диалога подтверждения
+            AlertDialog.Builder(this).apply {
+                setTitle("Подтверждение")
+                setMessage("Вы уверены, что хотите закрыть смену?")
+                setPositiveButton("Да") { _, _ ->
+                    // Пользователь подтвердил закрытие смены
+                    actuallyCloseShift()
+                }
+                setNegativeButton("Нет", null) // Ничего не делаем, если пользователь отменил
+                show()
+            }
         }
+    }
+
+    private fun actuallyCloseShift() {
+        isShiftOpen = false
+        saveShiftState()
+        updateButtonsVisibility()
+        updateRecyclerViewVisibility()
+        Toast.makeText(this, "Смена закрыта", Toast.LENGTH_SHORT).show()
+
+        val beerDifferences = calculateBeerDifferences()
+        val currentDate = SimpleDateFormat("ddMMyyyy", Locale.getDefault()).format(Date())
+        val fileName = "shift_data_$currentDate.xlsx"
+        saveExcelDocument.launch(fileName)
+        closeShiftButton.visibility = View.GONE
+        openShiftButton.visibility = View.VISIBLE
+        chooseFileButton.visibility = View.VISIBLE
+    }
+
+    private fun saveShiftState() {
+        sharedPreferences.edit()
+            .putBoolean("isShiftOpen", isShiftOpen)
+            .apply()
+    }
+
+    private fun updateButtonsVisibility() {
+        openShiftButton.visibility = if (isShiftOpen) View.GONE else View.VISIBLE
+        closeShiftButton.visibility = if (isShiftOpen) View.VISIBLE else View.GONE
+    }
+
+    private fun updateRecyclerViewVisibility() {
+        recyclerView.visibility = if (isShiftOpen) View.VISIBLE else View.GONE
     }
 
     private fun isDatabaseAvailable(): Boolean {
