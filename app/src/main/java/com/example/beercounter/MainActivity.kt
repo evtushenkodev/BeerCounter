@@ -106,6 +106,7 @@ class MainActivity : AppCompatActivity() {
         if (!isShiftOpen) {
             resetShiftData()
             isShiftOpen = true
+            resetShiftData()
             saveShiftState()
             updateButtonsVisibility()
             updateRecyclerViewVisibility()
@@ -129,7 +130,6 @@ class MainActivity : AppCompatActivity() {
             updateButtonDataInDatabase(beerButtonData)
         }
     }
-
 
     private fun closeShift() {
         if (isShiftOpen) {
@@ -222,7 +222,6 @@ class MainActivity : AppCompatActivity() {
             )
         }
     }
-
     fun onChooseFileButtonClick(view: View) {
         openExcelDocument.launch(arrayOf("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
     }
@@ -233,7 +232,6 @@ class MainActivity : AppCompatActivity() {
         val beerDifferences = calculateBeerDifferences()
         saveDataToExcelFile(beerDifferences, fileName)
     }
-
 
     @SuppressLint("Range", "NotifyDataSetChanged")
     private fun loadButtonDataFromDatabase() {
