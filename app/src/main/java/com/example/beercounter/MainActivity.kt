@@ -7,8 +7,10 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.icu.text.SimpleDateFormat
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
-import android.util.Log
+import android.os.Environment
+import android.provider.MediaStore
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
@@ -30,7 +32,12 @@ import java.util.Date
 import java.util.Locale
 
 
-data class BeerButtonData(val name: String, val count: MutableLiveData<Double>, var received: Double = 0.0, var sold: Double = 0.0) {
+data class BeerButtonData(
+    val name: String,
+    val count: MutableLiveData<Double>,
+    var received: Double = 0.0,
+    var sold: Double = 0.0
+) {
     fun updateValue(newValue: Double, isReceived: Boolean) {
         if (isReceived) {
             received += newValue - (count.value ?: 0.0)
@@ -43,7 +50,7 @@ data class BeerButtonData(val name: String, val count: MutableLiveData<Double>, 
 
 
 class MainActivity : AppCompatActivity() {
-    private lateinit var dbHelper: MyDatabaseHelper
+    private lateinit var dbHelper: DatabaseHelper
     private val buttonDataList = mutableListOf<BeerButtonData>()
     private lateinit var recyclerView: RecyclerView
     private lateinit var buttonAdapter: ButtonAdapter
@@ -71,7 +78,7 @@ class MainActivity : AppCompatActivity() {
         openShiftButton.visibility = View.VISIBLE
         closeShiftButton.visibility = View.GONE
 
-        dbHelper = MyDatabaseHelper(this)
+        dbHelper = DatabaseHelper(this)
         dbHelper.writableDatabase
 
         recyclerView = findViewById(R.id.buttonsRecyclerView)
@@ -97,6 +104,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun openShift() {
         if (!isShiftOpen) {
+            resetShiftData()
             isShiftOpen = true
             saveShiftState()
             updateButtonsVisibility()
@@ -112,6 +120,16 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+
+    // Сброс данных смены
+    private fun resetShiftData() {
+        buttonDataList.forEach { beerButtonData ->
+            beerButtonData.received = 0.0
+            beerButtonData.sold = 0.0
+            updateButtonDataInDatabase(beerButtonData)
+        }
+    }
+
 
     private fun closeShift() {
         if (isShiftOpen) {
@@ -139,7 +157,7 @@ class MainActivity : AppCompatActivity() {
         val beerDifferences = calculateBeerDifferences()
         val currentDate = SimpleDateFormat("ddMMyyyy", Locale.getDefault()).format(Date())
         val fileName = "shift_data_$currentDate.xlsx"
-        saveExcelDocument.launch(fileName)
+        saveDataToExcelFile(beerDifferences, fileName)
         closeShiftButton.visibility = View.GONE
         openShiftButton.visibility = View.VISIBLE
         chooseFileButton.visibility = View.VISIBLE
@@ -167,17 +185,17 @@ class MainActivity : AppCompatActivity() {
 
     @SuppressLint("NotifyDataSetChanged")
     private fun insertDataToDatabase(buttonDataList: List<BeerButtonData>) {
-        // Очистим существующие данные в базе данных
         val database = dbHelper.writableDatabase
         database.delete("beer_table", null, null)
 
-        // Вставляем новые данные из списка
         for (beerButtonData in buttonDataList) {
-            val values = ContentValues()
-            values.put("name", beerButtonData.name)
-            values.put("count", beerButtonData.count.value)
+            val values = ContentValues().apply {
+                put("name", beerButtonData.name)
+                put("count", beerButtonData.count.value ?: 0.0)
+                put("received", beerButtonData.received)
+                put("sold", beerButtonData.sold)
+            }
 
-            // Вставляем данные в базу данных
             database.insert("beer_table", null, values)
         }
     }
@@ -191,20 +209,17 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-    private val saveExcelDocument =
-        registerForActivityResult(ActivityResultContracts.CreateDocument()) { uri ->
-            if (uri != null) {
-                val beerDifferences = calculateBeerDifferences()
-                saveDataToExcelFile(uri, beerDifferences) // Сохраняем данные в файл
-            }
-        }
-
     private fun calculateBeerDifferences(): List<BeerData> {
         return buttonDataList.map { beerButtonData ->
             val initialCount = initialBeerCounts[beerButtonData.name] ?: 0.0
             val currentCount = beerButtonData.count.value ?: 0.0
             val difference = currentCount - initialCount
-            BeerData(beerButtonData.name, currentCount, beerButtonData.received, beerButtonData.sold)
+            BeerData(
+                beerButtonData.name,
+                currentCount,
+                beerButtonData.received,
+                beerButtonData.sold
+            )
         }
     }
 
@@ -215,26 +230,25 @@ class MainActivity : AppCompatActivity() {
     fun onSaveButtonClick(view: View) {
         val currentDate = SimpleDateFormat("ddMMyyyy", Locale.getDefault()).format(Date())
         val fileName = "data_$currentDate.xlsx"
-        saveExcelDocument.launch(fileName)
+        val beerDifferences = calculateBeerDifferences()
+        saveDataToExcelFile(beerDifferences, fileName)
     }
 
 
     @SuppressLint("Range", "NotifyDataSetChanged")
     private fun loadButtonDataFromDatabase() {
-        // Загрузка данных из базы данных и заполнение buttonDataList
         val database = dbHelper.readableDatabase
-        val projection = arrayOf("name", "count")
+        val projection = arrayOf("name", "count", "received", "sold")
         val cursor = database.query("beer_table", projection, null, null, null, null, null)
         if (cursor != null) {
             if (cursor.moveToFirst()) {
-                Log.d("loadButtonDataFromDatabase", "Cursor moveToFirst() successful")
                 do {
                     val name = cursor.getString(cursor.getColumnIndex("name"))
                     val count = cursor.getDouble(cursor.getColumnIndex("count"))
-                    val liveData = MutableLiveData(count)
-                    buttonDataList.add(BeerButtonData(name, liveData))
-
-                    Log.d("loadButtonDataFromDatabase", "Name: $name, Count: $count")
+                    val received = cursor.getDouble(cursor.getColumnIndex("received"))
+                    val sold = cursor.getDouble(cursor.getColumnIndex("sold"))
+                    val liveData = MutableLiveData<Double>(count)
+                    buttonDataList.add(BeerButtonData(name, liveData, received, sold))
                 } while (cursor.moveToNext())
 
                 cursor.close()
@@ -246,21 +260,18 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-    private fun updateButtonDataInDatabase() {
-        // Обновление данных в базе данных
+    private fun updateButtonDataInDatabase(beerButtonData: BeerButtonData) {
         val database = dbHelper.writableDatabase
-
-        for (buttonData in buttonDataList) {
-            val values = ContentValues().apply {
-                put("name", buttonData.name)
-                put("count", buttonData.count.value ?: 0.0)
-            }
-
-            val selection = "name = ?"
-            val selectionArgs = arrayOf(buttonData.name)
-            database.update("beer_table", values, selection, selectionArgs)
-
+        val values = ContentValues().apply {
+            put("name", beerButtonData.name)
+            put("count", beerButtonData.count.value ?: 0.0)
+            put("received", beerButtonData.received)
+            put("sold", beerButtonData.sold)
         }
+
+        val selection = "name = ?"
+        val selectionArgs = arrayOf(beerButtonData.name)
+        database.update("beer_table", values, selection, selectionArgs)
     }
 
 
@@ -303,52 +314,70 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun saveDataToExcelFile(uri: Uri, beerData: List<BeerData>) {
-        try {
-            val workbook: Workbook = XSSFWorkbook()
-            val sheet = workbook.createSheet("Shift Data")
-
-            // Создаем заголовки для колонок
-            val headerRow = sheet.createRow(0)
-            headerRow.createCell(0).setCellValue("Название пива")
-            headerRow.createCell(1).setCellValue("Остаток на конец смены")
-            headerRow.createCell(2).setCellValue("Принято")
-            headerRow.createCell(3).setCellValue("Продано")
-
-            var totalEnd = 0.0
-            var totalReceived = 0.0
-            var totalSold = 0.0
-
-            for ((index, data) in beerData.withIndex()) {
-                val row = sheet.createRow(index + 1)
-                row.createCell(0).setCellValue(data.name)
-                row.createCell(1).setCellValue(data.endAmount)
-                row.createCell(2).setCellValue(data.received)
-                row.createCell(3).setCellValue(data.sold)
-
-                totalEnd += data.endAmount
-                totalReceived += data.received
-                totalSold += data.sold
+    private fun saveDataToExcelFile(beerData: List<BeerData>, fileName: String) {
+        val resolver = contentResolver
+        val contentValues = ContentValues().apply {
+            put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
+            put(
+                MediaStore.MediaColumns.MIME_TYPE,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOCUMENTS)
             }
+        }
 
-            // Добавляем строку с общими суммами
-            val totalRow = sheet.createRow(beerData.size + 1)
-            totalRow.createCell(0).setCellValue("Итого")
-            totalRow.createCell(1).setCellValue(totalEnd)
-            totalRow.createCell(2).setCellValue(totalReceived)
-            totalRow.createCell(3).setCellValue(totalSold)
+        val uri = resolver.insert(MediaStore.Files.getContentUri("external"), contentValues)
+        if (uri != null) {
+            try {
+                resolver.openOutputStream(uri).use { outputStream ->
+                    val workbook: Workbook = XSSFWorkbook()
+                    val sheet = workbook.createSheet("Shift Data")
 
-            // Сохраняем файл
-            val outputStream = contentResolver.openOutputStream(uri)
-            outputStream?.let {
-                workbook.write(it)
-                it.close()
+                    // Создаем заголовки для колонок
+                    val headerRow = sheet.createRow(0)
+                    headerRow.createCell(0).setCellValue("Название пива")
+                    headerRow.createCell(1).setCellValue("Остаток на конец смены")
+                    headerRow.createCell(2).setCellValue("Принято")
+                    headerRow.createCell(3).setCellValue("Продано")
+
+                    var totalEnd = 0.0
+                    var totalReceived = 0.0
+                    var totalSold = 0.0
+
+                    for ((index, data) in beerData.withIndex()) {
+                        val row = sheet.createRow(index + 1)
+                        row.createCell(0).setCellValue(data.name)
+                        row.createCell(1).setCellValue(data.endAmount)
+                        row.createCell(2).setCellValue(data.received)
+                        row.createCell(3).setCellValue(data.sold)
+
+                        totalEnd += data.endAmount
+                        totalReceived += data.received
+                        totalSold += data.sold
+                    }
+
+                    // Добавляем строку с общими суммами
+                    val totalRow = sheet.createRow(beerData.size + 1)
+                    totalRow.createCell(0).setCellValue("Итого")
+                    totalRow.createCell(1).setCellValue(totalEnd)
+                    totalRow.createCell(2).setCellValue(totalReceived)
+                    totalRow.createCell(3).setCellValue(totalSold)
+
+                    // Записываем данные в файл
+                    workbook.write(outputStream)
+                    workbook.close()
+                    Toast.makeText(this, "Файл сохранен: $fileName", Toast.LENGTH_LONG).show()
+                }
+            } catch (e: IOException) {
+                Toast.makeText(this, "Ошибка при сохранении файла: ${e.message}", Toast.LENGTH_LONG)
+                    .show()
             }
-            workbook.close()
-        } catch (e: Exception) {
-            e.printStackTrace()
+        } else {
+            Toast.makeText(this, "Ошибка создания файла", Toast.LENGTH_SHORT).show()
         }
     }
+
 
 
     @SuppressLint("SetTextI18n")
@@ -395,7 +424,7 @@ class MainActivity : AppCompatActivity() {
             val toastMessage = "Принято $customValue л  $buttonName"
             Toast.makeText(this, toastMessage, Toast.LENGTH_SHORT).show()
 
-            updateButtonDataInDatabase() // Вызываем метод для обновления данных в базе
+            updateButtonDataInDatabase(buttonData) // Вызываем метод для обновления данных в базе
 
             dialog.dismiss()
         }
@@ -412,7 +441,7 @@ class MainActivity : AppCompatActivity() {
                 val toastMessage = "Продано $customValue л  $buttonName"
                 Toast.makeText(this, toastMessage, Toast.LENGTH_SHORT).show()
 
-                updateButtonDataInDatabase() // Вызываем метод для обновления данных в базе
+                updateButtonDataInDatabase(buttonData) // Вызываем метод для обновления данных в базе
 
                 dialog.dismiss()
             } else {
